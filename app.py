@@ -21,8 +21,24 @@ class getto_db:
         self.db = {}
         self.group_id = 0
     
-    def add_data(self, owner, groupname, coursecode):
-        pass
+    def add_data(self, owner: str, groupname: str, coursecode: str) -> str:
+        group_id = coursecode+str(self.group_id)
+        self.db[group_id] = {'group_id': group_id, 'owner': owner, 'groupname': groupname, 'coursecode': coursecode, 'members': []}
+        self.group_id += 1
+        return group_id
+    
+    def find_data(self, coursecode: str) -> list:
+        found = []
+        for group_id in self.db:
+            if coursecode in group_id:
+                found.append(self.db[group_id])
+        return found
+    
+    def join_group(self, group_id: str, memeber: str) -> None:
+        self.db[group_id]['members'].append(memeber)
+
+
+db = getto_db()
 
 
 
@@ -33,7 +49,11 @@ def index():
 @app.route('/create', methods=['POST', 'GET'])
 def create():
     if request.method == 'POST':
-        pass
+        a = db.add_data('popy', 'gname0', 'comm')
+        b = db.add_data('pope', 'gname1', 'comp')
+        c = db.add_data('popi', 'gname2', 'comm')
+        db.join_group('comm0', 'memeber1')
+        return str(db.find_data('comm'))
     else:
         return render_template('create.html')
 
