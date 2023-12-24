@@ -16,7 +16,7 @@ app = Flask(__name__)
 #    def __repr__(self):
 #        return '<Task %r>' % self.id
 
-class getto_db:
+class ghetto_db:
     def __init__(self) -> None:
         self.db = {}
         self.group_id = 0
@@ -38,7 +38,7 @@ class getto_db:
         self.db[group_id]['members'].append(memeber)
 
 
-db = getto_db()
+db = ghetto_db()
 
 
 
@@ -49,17 +49,19 @@ def index():
 @app.route('/create', methods=['POST', 'GET'])
 def create():
     if request.method == 'POST':
-        a = db.add_data('popy', 'gname0', 'comm')
-        b = db.add_data('pope', 'gname1', 'comp')
-        c = db.add_data('popi', 'gname2', 'comm')
-        db.join_group('comm0', 'memeber1')
-        return str(db.find_data('comm'))
+        group_id = db.add_data(request.form['username'], request.form['groupname'], request.form['coursecode'])
+        data = db.find_data(group_id)
+        return render_template('group.html', data=data)
     else:
         return render_template('create.html')
 
-@app.route('/find')
+@app.route('/find', methods=['POST', 'GET'])
 def find():
-    return render_template('find.html')
+    if request.method == 'POST':
+        data = db.find_data(request.form['coursecode'])
+        return render_template('group.html', data=data)
+    else:
+        return render_template('find.html')
 
 
 @app.route('/notes')
