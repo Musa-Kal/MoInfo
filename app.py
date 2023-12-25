@@ -19,14 +19,24 @@ app = Flask(__name__)
 class ghetto_db:
     def __init__(self) -> None:
         self.db = {}
-        self.group_id = 0
+        self.id_count = 0
     
-    def add_data(self, owner: str, groupname: str, coursecode: str) -> str:
-        group_id = coursecode+str(self.group_id)
+    # Group owner actions:
+    def add_group(self, owner: str, groupname: str, coursecode: str) -> dict:
+        group_id = coursecode+str(self.id_count)
         self.db[group_id] = {'group_id': group_id, 'owner': owner, 'groupname': groupname, 'coursecode': coursecode, 'members': []}
-        self.group_id += 1
-        return group_id
+        self.id_count += 1
+        return self.db[group_id]
     
+    def delete_group(self, group_id: str) -> None:
+        if group_id in self.db:
+            del self.db[group_id]
+   
+    # Group memebr actions:
+    def group_info(self, group_id: str) -> dict:
+        return (self.db).get(group_id, {'group_id': group_id, 'owner': 'ERROR', 'groupname': 'ERROR', 'coursecode': 'ERROR', 'members': []})
+
+
     def find_data(self, coursecode: str) -> list:
         found = []
         for group_id in self.db:
@@ -35,7 +45,12 @@ class ghetto_db:
         return found
     
     def join_group(self, group_id: str, memeber: str) -> None:
-        self.db[group_id]['members'].append(memeber)
+        if group_id in self.db:
+            (self.db[group_id]['members']).append(memeber)
+
+    def leave_group(self, group_id: str, member: str) -> None:
+        if group_id in self.db:
+            (self.db[group_id]['members']).remove(member)
 
 
 db = ghetto_db()
@@ -49,20 +64,35 @@ def index():
 @app.route('/create', methods=['POST', 'GET'])
 def create():
     if request.method == 'POST':
-        group_id = db.add_data(request.form['username'], request.form['groupname'], request.form['coursecode'])
-        data = db.find_data(group_id)
-        return render_template('group.html', data=data)
+        data = db.add_group(request.form['username'], request.form['groupname'], request.form['coursecode'])
+        return render_template('groupowner.html', data=data)
     else:
         return render_template('create.html')
+    
+@app.route('/deletegroup/<group_id>')
+def delete(group_id):
+    db.delete_group(group_id)
+    return redirect('/')
 
 @app.route('/find', methods=['POST', 'GET'])
 def find():
     if request.method == 'POST':
         data = db.find_data(request.form['coursecode'])
-        return render_template('group.html', data=data)
+        username = request.form['username']
+        return render_template('listgroup.html', data=data, username=username)
     else:
         return render_template('find.html')
+    
+@app.route('/join/<username>/<group_id>')
+def join(username, group_id):
+    db.join_group(group_id, username)
+    data = db.group_info(group_id)
+    return render_template('joinedgroup.html', data=data, username=username)
 
+@app.route('/leavegroup/<username>/<group_id>')
+def leavegroup(username, group_id):
+    db.leave_group(group_id, username)
+    return redirect('/')
 
 @app.route('/notes')
 def notes():
