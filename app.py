@@ -26,7 +26,7 @@ class ghetto_db:
         group_id = coursecode+str(self.id_count)
         self.db[group_id] = {'group_id': group_id, 'owner': owner, 'groupname': groupname, 'coursecode': coursecode, 'members': []}
         self.id_count += 1
-        return self.db[group_id]
+        return group_id
     
     def delete_group(self, group_id: str) -> None:
         if group_id in self.db:
@@ -64,10 +64,16 @@ def index():
 @app.route('/create', methods=['POST', 'GET'])
 def create():
     if request.method == 'POST':
-        data = db.add_group(request.form['username'], request.form['groupname'], request.form['coursecode'])
-        return render_template('groupowner.html', data=data)
+        group_id = db.add_group(request.form['username'], request.form['groupname'], request.form['coursecode'])
+        return redirect(f'/group/{group_id}')
     else:
         return render_template('create.html')
+    
+@app.route('/group/<group_id>')
+def created_group(group_id):
+    data = db.group_info(group_id)
+    return render_template('groupowner.html', data=data)
+
     
 @app.route('/deletegroup/<group_id>')
 def delete(group_id):
@@ -86,6 +92,10 @@ def find():
 @app.route('/join/<username>/<group_id>')
 def join(username, group_id):
     db.join_group(group_id, username)
+    return redirect(f'/joinedgroup/{username}/{group_id}') 
+
+@app.route('/joinedgroup/<username>/<group_id>')
+def joinedgroup(username, group_id):
     data = db.group_info(group_id)
     return render_template('joinedgroup.html', data=data, username=username)
 
